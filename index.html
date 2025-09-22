@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>E1W1 Conversion Tracker</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+  <style>
+    #map { height: 500px; border-radius: 12px; }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-green-50 min-h-screen p-4">
+  <div class="max-w-7xl mx-auto">
+
+    <!-- Header -->
+    <div class="text-center mb-8">
+      <h1 class="text-4xl font-bold text-gray-800 mb-2">🙏 E1W1 Conversion Tracker</h1>
+      <p class="text-gray-600">Track and visualize souls saved and lives reached across Guyana</p>
+    </div>
+
+    <!-- Conversion Form -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div class="bg-white rounded-lg shadow-lg p-6">
+        <h2 class="text-2xl font-bold text-gray-800 mb-4">📝 Record New Conversion</h2>
+        <form id="conversionForm" class="space-y-4">
+
+          <!-- Lives Reached -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Lives Reached</label>
+            <input type="number" id="livesReached" min="0" value="0"
+              class="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-green-500"/>
+          </div>
+
+          <!-- Lives Saved -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Lives Saved</label>
+            <input type="number" id="livesSaved" min="0" value="0"
+              class="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-green-500"/>
+          </div>
+
+          <!-- Region -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Region</label>
+            <select id="region" required
+              class="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-green-500">
+              <option value="">Select Region</option>
+              <option value="Region 1 - Barima-Waini">Region 1 - Barima-Waini</option>
+              <option value="Region 2 - Pomeroon-Supenaam">Region 2 - Pomeroon-Supenaam</option>
+              <option value="Region 3 - Essequibo Islands-West Demerara">Region 3 - Essequibo Islands-West Demerara</option>
+              <option value="Region 4 - Demerara-Mahaica">Region 4 - Demerara-Mahaica</option>
+              <option value="Region 5 - Mahaica-Berbice">Region 5 - Mahaica-Berbice</option>
+              <option value="Region 6 - East Berbice-Corentyne">Region 6 - East Berbice-Corentyne</option>
+              <option value="Region 7 - Cuyuni-Mazaruni">Region 7 - Cuyuni-Mazaruni</option>
+              <option value="Region 8 - Potaro-Siparuni">Region 8 - Potaro-Siparuni</option>
+              <option value="Region 9 - Upper Takutu-Upper Essequibo">Region 9 - Upper Takutu-Upper Essequibo</option>
+              <option value="Region 10 - Upper Demerara-Berbice">Region 10 - Upper Demerara-Berbice</option>
+            </select>
+          </div>
+
+          <!-- Method -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Method</label>
+            <select id="method" required
+              class="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-green-500">
+              <option value="">Select Method</option>
+              <option value="Door-to-Door">Door-to-Door</option>
+              <option value="Church Service">Church Service</option>
+              <option value="Street Preaching">Street Preaching</option>
+              <option value="Bible Study">Bible Study</option>
+              <option value="Community Event">Community Event</option>
+              <option value="Personal Testimony">Personal Testimony</option>
+              <option value="Online Ministry">Online Ministry</option>
+            </select>
+          </div>
+
+          <!-- Notes -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Notes</label>
+            <textarea id="notes" rows="3"
+              class="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-green-500"></textarea>
+          </div>
+
+          <button type="submit"
+            class="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition">
+            ✝️ Record Conversion
+          </button>
+        </form>
+      </div>
+
+      <!-- Leaflet Map -->
+      <div class="lg:col-span-2 bg-white rounded-lg shadow-lg p-6">
+        <h2 class="text-2xl font-bold text-gray-800 mb-4">🗺️ Guyana Conversion Map</h2>
+        <div id="map"></div>
+      </div>
+    </div>
+
+    <!-- Recent Conversions -->
+    <div class="mt-8 bg-white rounded-lg shadow-lg p-6">
+      <h2 class="text-2xl font-bold text-gray-800 mb-4">📋 Recent Conversions</h2>
+      <div id="recentConversions" class="space-y-3">
+        <div class="text-center text-gray-500 py-8">No conversions yet. 🙏</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Progress Tracking -->
+  <div class="mt-8 bg-white rounded-lg shadow-lg p-6">
+    <h2 class="text-2xl font-bold text-gray-800 mb-4">📊 Progress Tracker</h2>
+
+    <!-- Lives Reached Progress -->
+    <div class="mb-4">
+      <label class="block text-sm font-medium text-gray-700 mb-2">Lives Reached (Goal: 50,000)</label>
+      <div class="w-full bg-gray-200 rounded-full h-4">
+        <div id="livesReachedBar" class="bg-blue-500 h-4 rounded-full" style="width: 0%"></div>
+      </div>
+      <p id="livesReachedText" class="text-sm text-gray-600 mt-1">0 / 50,000 (0%)</p>
+    </div>
+
+    <!-- Lives Saved Progress -->
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-2">Lives Saved (Goal: 1,000)</label>
+      <div class="w-full bg-gray-200 rounded-full h-4">
+        <div id="livesConvertedBar" class="bg-green-500 h-4 rounded-full" style="width: 0%"></div>
+      </div>
+      <p id="livesConvertedText" class="text-sm text-gray-600 mt-1">0 / 1,000 (0%)</p>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script>
+    const GOAL_REACHED = 50000;
+    const GOAL_SAVED = 1000;
+
+    // Load existing conversions
+    let conversions = JSON.parse(localStorage.getItem('conversions')) || [];
+
+    // Map setup
+    const map = L.map('map').setView([4.8604, -58.9302], 6);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    // Add marker
+    function addMarker(conv) {
+      if (!conv.region) return;
+      const coords = {
+        "Region 1 - Barima-Waini": [8.2000, -59.7833],
+        "Region 2 - Pomeroon-Supenaam": [7.2644, -58.5076],
+        "Region 3 - Essequibo Islands-West Demerara": [6.8050, -58.4333],
+        "Region 4 - Demerara-Mahaica": [6.8013, -58.1551],
+        "Region 5 - Mahaica-Berbice": [6.2766, -57.3560],
+        "Region 6 - East Berbice-Corentyne": [6.2472, -57.5170],
+        "Region 7 - Cuyuni-Mazaruni": [6.4074, -58.6218],
+        "Region 8 - Potaro-Siparuni": [5.2667, -59.1500],
+        "Region 9 - Upper Takutu-Upper Essequibo": [3.3833, -59.8000],
+        "Region 10 - Upper Demerara-Berbice": [5.9879, -58.2708]
+      };
+      if (!coords[conv.region]) return;
+      L.marker(coords[conv.region]).addTo(map).bindPopup(`
+        <b>${conv.region}</b><br>
+        ${conv.method}<br>
+        Lives Reached: ${conv.reached}<br>
+        Lives Saved: ${conv.saved}
+      `);
+    }
+
+    // Update progress bars
+    function updateProgressBars() {
+      const totalReached = conversions.reduce((sum, c) => sum + (parseInt(c.reached) || 0), 0);
+      const totalSaved = conversions.reduce((sum, c) => sum + (parseInt(c.saved) || 0), 0);
+
+      const percentReached = Math.min((totalReached / GOAL_REACHED) * 100, 100).toFixed(1);
+      const percentSaved = Math.min((totalSaved / GOAL_SAVED) * 100, 100).toFixed(1);
+
+      document.getElementById("livesReachedBar").style.width = percentReached + "%";
+      document.getElementById("livesConvertedBar").style.width = percentSaved + "%";
+
+      document.getElementById("livesReachedText").textContent =
+        `${totalReached.toLocaleString()} / ${GOAL_REACHED.toLocaleString()} (${percentReached}%)`;
+      document.getElementById("livesConvertedText").textContent =
+        `${totalSaved.toLocaleString()} / ${GOAL_SAVED.toLocaleString()} (${percentSaved}%)`;
+    }
+
+    // Update recent conversions
+    function updateRecentConversions() {
+      const container = document.getElementById('recentConversions');
+      if (conversions.length === 0) {
+        container.innerHTML = '<div class="text-center text-gray-500 py-8">No conversions yet. 🙏</div>';
+        return;
+      }
+      const recent = [...conversions].slice(-5).reverse();
+      container.innerHTML = recent.map(c => `
+        <div class="bg-gray-50 rounded-lg p-4 border-l-4 border-green-500">
+          <p class="text-sm text-gray-600">${c.region} • ${c.method}</p>
+          <p class="text-sm text-gray-700">Lives Reached: ${c.reached}</p>
+          <p class="text-sm text-gray-700">Lives Saved: ${c.saved}</p>
+        </div>
+      `).join("");
+    }
+
+    // Form submission
+    document.getElementById('conversionForm').addEventListener('submit', e => {
+      e.preventDefault();
+      const conv = {
+        reached: parseInt(document.getElementById('livesReached').value) || 0,
+        saved: parseInt(document.getElementById('livesSaved').value) || 0,
+        region: document.getElementById('region').value,
+        method: document.getElementById('method').value,
+        notes: document.getElementById('notes').value,
+        timestamp: new Date().toISOString()
+      };
+      conversions.push(conv);
+      localStorage.setItem('conversions', JSON.stringify(conversions));
+      addMarker(conv);
+      updateRecentConversions();
+      updateProgressBars();
+      e.target.reset();
+    });
+
+    // Init
+    conversions.forEach(addMarker);
+    updateRecentConversions();
+    updateProgressBars();
+  </script>
+</body>
+</html>
